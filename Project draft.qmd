@@ -1,0 +1,180 @@
+---
+title: "Semester project"
+author: "Diana & Erica"
+format: pdf
+editor: visual
+---
+
+## RQ:
+
+Does a high carbon tax rate lead to lower GHG emissions per capita after factoring in fossil fuel share in the energy mix and GDP?
+
+```{r}
+#| label: Setup and packages
+#| message: false
+#| warning: false
+#| tidy: true
+
+library(tidyverse)
+library(readxl)
+
+Carbon_tax <- read_excel(
+  "Carbon_tax.xlsx", sheet = "Compliance_Price", skip = 1)
+GHG <- read_csv("GHG.csv")
+Population <- read_csv("Population.csv")
+GDP <- read_csv("GDP.csv")
+Energy_mix <- read_csv("Energy_mix.csv")
+
+```
+
+(Tax rate is USD per tonne of CO2-equivalent)
+
+```{r}
+#| label: Cleaning data sets
+#| echo: true
+#| message: false
+#| warning: false
+
+#Choosing and renaming relevant columns
+My_countries <- c("Austria", "Belgium", "Denmark", "Estonia", "Finland", 
+                  "France", "Germany", "Greece", "Hungary", "Iceland", 
+                  "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", 
+                  "Netherlands", "Norway", "Poland", "Portugal", 
+                  "Slovenia", "Spain", "Sweden")
+  
+Year_range <- 2005:2024
+
+Carbon_tax_clean <- Carbon_tax %>%
+  filter(
+    `Instrument Type` == "Carbon tax"
+    ) %>% #filtering out ETS only keeping carbon tax
+  mutate(
+    Country = str_extract(`Name of the initiative`,
+  paste(My_countries, collapse = "|"))
+  ) %>% 
+  filter(!is.na(Country)) %>%
+  select(
+    Country, all_of(as.character(Year_range))
+    ) %>%
+  pivot_longer(
+    cols = -Country, names_to = "Year", values_to = "Tax_rate_usd"
+    ) %>%
+  mutate(
+    Year = as.numeric(Year),
+    Tax_rate_usd = ifelse(is.na(Tax_rate_usd), 0, Tax_rate_usd)
+    )
+
+no_tax_countries <- setdiff(My_countries, unique(Carbon_tax_clean$Country))
+
+no_tax_filled <- expand_grid(Country = no_tax_countries, Year = Year_range
+    ) %>%
+  mutate(Tax_rate_usd = 0)
+
+Carbon_tax_clean <- bind_rows(Carbon_tax_clean, no_tax_filled) %>%
+  arrange(Country, Year)
+
+#Choosing and renaming relevant columns
+GHG_clean <- GHG %>%
+  select(
+    `Geopolitical entity (reporting)`, TIME_PERIOD, OBS_VALUE
+    ) %>%
+  rename(
+    Country = `Geopolitical entity (reporting)`, 
+    Year = TIME_PERIOD, 
+    Total_emissions = OBS_VALUE
+  )
+
+#Choosing and renaming relevant columns
+Population_clean <- Population %>%
+  select(
+    `Geopolitical entity (reporting)`, TIME_PERIOD, OBS_VALUE
+  ) %>%
+  rename(Country = `Geopolitical entity (reporting)`, 
+         Year = TIME_PERIOD, 
+         Population = OBS_VALUE
+         )
+#Choosing and renaming relevant columns
+GDP_clean <- GDP %>%
+  select(
+    `Geopolitical entity (reporting)`, TIME_PERIOD, OBS_VALUE
+  ) %>%
+  rename(
+    Country = `Geopolitical entity (reporting)`, 
+    Year = TIME_PERIOD, 
+    GDP_per_capita = OBS_VALUE
+  )
+
+#Choosing and renaming relevant columns
+Energy_mix_clean <- Energy_mix %>%
+  select(
+    Country = `Geopolitical entity (reporting)`,
+    Year = TIME_PERIOD, 
+    Source = `Standard international energy product classification (SIEC)`, 
+    OBS_VALUE
+  ) %>%
+  filter(Source %in% c("Solid fossil fuels", 
+  "Natural gas", 
+  "Oil and petroleum products (excluding biofuel portion)", "Total")
+         ) %>%
+  pivot_wider(
+    names_from = Source, values_from = OBS_VALUE, values_fill = 0 
+    ) %>%
+  mutate(
+    Fossil_fuels_share = (`Solid fossil fuels` + `Natural gas` +
+    `Oil and petroleum products (excluding biofuel portion)`) 
+    / Total * 100
+    ) %>%
+  select(
+    Country, Year, Fossil_fuels_share
+    )
+```
+
+```{r}
+#| label: Merging data sets
+#| echo: true
+
+Merged1 <- merge(
+  Carbon_tax_clean, GHG_clean, 
+  by.x = c("Country","Year"), by.y = c("Country", "Year")
+  )
+
+Merged2 <- merge(
+  Population_clean, GDP_clean, 
+  by.x = c("Country","Year"), by.y = c("Country", "Year")
+  )
+
+Merged3 <- merge(
+  Merged1, Merged2, 
+  by.x = c("Country","Year"), by.y = c("Country", "Year")
+  )
+
+Trial_dataset <- merge(
+  Merged3, Energy_mix_clean, 
+  by.x = c("Country","Year"), by.y = c("Country", "Year")
+  )
+
+```
+
+### Calculating: emissions per capita = Total emissions/ Total population
+
+Unit of measure is in tonnes
+
+```{r}
+
+
+Trial_dataset$Emissions_per_capita <- 
+  Trial_dataset$Total_emissions * 1000000 / Trial_dataset$Population 
+
+Final_dataset <- Trial_dataset %>%
+  select(
+    Country, Year, Tax_rate_usd, GDP_per_capita, Fossil_fuels_share, 
+    Emissions_per_capita
+  )
+
+```
+
+```{r}
+usethis::use_git()      # say yes to commit, then RStudio restarts
+usethis::use_github()   # creates the repo on GitHub and uploads it
+```
+
