@@ -1,0 +1,213 @@
+---
+title: "Semester project"
+author: "Diana & Erica"
+format: pdf
+editor: visual
+---
+
+### **Introduction**
+
+Governments around the world are introducing policies to reduce greenhouse gas (GHG) emissions and support the transition to a lower-carbon economy. Carbon taxes are among the most important of these tools, and Europe is where carbon pricing is most developed. Finland introduced the world’s first carbon tax in 1990, starting at a low rate that rose over time, and the policy has since inspired other nations to consider similar approaches (EARTH.ORG). Today, 24 European countries have a carbon tax. By putting a price on carbon, the tax makes emitting more costly and gives households and firms a reason to cut back.
+
+Carbon tax rates vary enormously. In 2024, they ranged from about US\$0.08 per tonne of CO2 in Poland to US\$124 in Sweden, and some European countries have no carbon tax at all. This raises a natural question: do carbon taxes actually reduce emissions? At first glance, countries with higher taxes should emit less. However, wealthy countries and countries with a large share of low-carbon energy may have low emissions with or without a tax. We therefore control for income and the energy mix before drawing any conclusions.
+
+Our research question is:
+
+*Does a high carbon tax rate lead to lower GHG emissions per capita after factoring in fossil fuel share in the energy mix and GDP?*
+
+To answer it, we use a panel of 22 European countries over 2005-2024, combining carbon tax rates from the World Bank with emissions, population, GDP and energy data from Eurostat. The analysis shows associations rather than causal effects, since governments with stronger climate ambition tend to set higher tax rates.
+
+### **Data sources**
+
+**Cleaning**
+
+The raw files we found contains many variables and columns we don't need. Therefore, for each file we only kept the country, year and the value. The final dataset was built in the following steps:
+
+1.  **Country and year:** We kept the 22 countries that have data in all five sources. Covering the period 2005-2024, which results in 420 country-year observations.
+
+2.  **Carbon tax rate:** The data source from The World Bank has one row per tax and one column per year. We only kept the instruments of type "carbon tax" were we matched each to its country. The dataset was restructured into panel format, with one observation per country and year. An empty cell means that no carbon tax existed in that country in that year, so we set it to 0.
+
+3.  **Countries without a national carbon tax:** Austria, Belgium, Germany, Greece, Italy and Lithuania don't have rows in the carbon tax data. The reason is that they price carbon only through the EU Emissions Trading Systems. We code them as 0 in all years.
+
+4.  **EU ETS is not included:** The ETS price is the same for all EU countries in a given year. Therefore it doesn't add a variation between the EU countries.
+
+5.  **Emissions per capita**: Eurostat reports total GHG emissions in million tonnes. We therefore multiply by 1 000 000 and divide by population to get tonnes of CO2 per person.
+
+6.  **Fossil fuel share:** For each country and year, we add up solid fossil fuels, natural gas, oil and petroleum products. These are divided by total gross available energy. We then take the denominator from Eurostats "Total" row instead of summing the other categories ourselves, si that its matches Eurostats official total.
+
+7.  **Units:** The carbon tax is measured in US dollars and the GDP per capita in euros, and we don't convert one into the other. This doesn't affect the regression, because the two variables enter seperatley. What it does is that the tax coefficient is interpreted per US dollars per tonne of CO2, not per euro.
+
+## **Descreptive statistics**
+
+Explain what the data shows us from the final dataset. ow many countries ever had a carbon tax and how many never did, the range of each variable, and anything unusual (for example Luxembourg's high emissions in the early years). Mention the correlations Half a page
+
+## **Exploring the data**
+
+```{r}
+#| label: Setup and packages
+#| message: false
+#| warning: false
+#| tidy: true
+
+library(tidyverse)
+library(readxl)
+
+Carbon_tax <- read_excel(
+  "Carbon_tax.xlsx", sheet = "Compliance_Price", skip = 1)
+GHG <- read_csv("GHG.csv")
+Population <- read_csv("Population.csv")
+GDP <- read_csv("GDP.csv")
+Energy_mix <- read_csv("Energy_mix.csv")
+
+```
+
+(Tax rate is USD per tonne of CO2-equivalent)
+
+```{r}
+#| label: Cleaning data sets
+#| echo: true
+#| message: false
+#| warning: false
+
+#Choosing and renaming relevant columns
+My_countries <- c("Austria", "Belgium", "Denmark", "Estonia", "Finland", 
+                  "France", "Germany", "Greece", "Hungary", "Iceland", 
+                  "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", 
+                  "Netherlands", "Norway", "Poland", "Portugal", 
+                  "Slovenia", "Spain", "Sweden")
+  
+Year_range <- 2005:2024
+
+Carbon_tax_clean <- Carbon_tax %>%
+  filter(
+    `Instrument Type` == "Carbon tax"
+    ) %>% #filtering out ETS only keeping carbon tax
+  mutate(
+    Country = str_extract(`Name of the initiative`,
+  paste(My_countries, collapse = "|"))
+  ) %>% 
+  filter(!is.na(Country)) %>%
+  select(
+    Country, all_of(as.character(Year_range))
+    ) %>%
+  pivot_longer(
+    cols = -Country, names_to = "Year", values_to = "Tax_rate_usd"
+    ) %>%
+  mutate(
+    Year = as.numeric(Year),
+    Tax_rate_usd = ifelse(is.na(Tax_rate_usd), 0, Tax_rate_usd)
+    )
+
+no_tax_countries <- setdiff(My_countries, unique(Carbon_tax_clean$Country))
+
+no_tax_filled <- expand_grid(Country = no_tax_countries, Year = Year_range
+    ) %>%
+  mutate(Tax_rate_usd = 0)
+
+Carbon_tax_clean <- bind_rows(Carbon_tax_clean, no_tax_filled) %>%
+  arrange(Country, Year)
+
+#Choosing and renaming relevant columns
+GHG_clean <- GHG %>%
+  select(
+    `Geopolitical entity (reporting)`, TIME_PERIOD, OBS_VALUE
+    ) %>%
+  rename(
+    Country = `Geopolitical entity (reporting)`, 
+    Year = TIME_PERIOD, 
+    Total_emissions = OBS_VALUE
+  )
+
+#Choosing and renaming relevant columns
+Population_clean <- Population %>%
+  select(
+    `Geopolitical entity (reporting)`, TIME_PERIOD, OBS_VALUE
+  ) %>%
+  rename(Country = `Geopolitical entity (reporting)`, 
+         Year = TIME_PERIOD, 
+         Population = OBS_VALUE
+         )
+#Choosing and renaming relevant columns
+GDP_clean <- GDP %>%
+  select(
+    `Geopolitical entity (reporting)`, TIME_PERIOD, OBS_VALUE
+  ) %>%
+  rename(
+    Country = `Geopolitical entity (reporting)`, 
+    Year = TIME_PERIOD, 
+    GDP_per_capita = OBS_VALUE
+  )
+
+#Choosing and renaming relevant columns
+Energy_mix_clean <- Energy_mix %>%
+  select(
+    Country = `Geopolitical entity (reporting)`,
+    Year = TIME_PERIOD, 
+    Source = `Standard international energy product classification (SIEC)`, 
+    OBS_VALUE
+  ) %>%
+  filter(Source %in% c("Solid fossil fuels", 
+  "Natural gas", 
+  "Oil and petroleum products (excluding biofuel portion)", "Total")
+         ) %>%
+  pivot_wider(
+    names_from = Source, values_from = OBS_VALUE, values_fill = 0 
+    ) %>%
+  mutate(
+    Fossil_fuels_share = (`Solid fossil fuels` + `Natural gas` +
+    `Oil and petroleum products (excluding biofuel portion)`) 
+    / Total * 100
+    ) %>%
+  select(
+    Country, Year, Fossil_fuels_share
+    )
+```
+
+```{r}
+#| label: Merging data sets
+#| echo: true
+
+Merged1 <- merge(
+  Carbon_tax_clean, GHG_clean, 
+  by.x = c("Country","Year"), by.y = c("Country", "Year")
+  )
+
+Merged2 <- merge(
+  Population_clean, GDP_clean, 
+  by.x = c("Country","Year"), by.y = c("Country", "Year")
+  )
+
+Merged3 <- merge(
+  Merged1, Merged2, 
+  by.x = c("Country","Year"), by.y = c("Country", "Year")
+  )
+
+Trial_dataset <- merge(
+  Merged3, Energy_mix_clean, 
+  by.x = c("Country","Year"), by.y = c("Country", "Year")
+  )
+
+```
+
+### Calculating: emissions per capita = Total emissions/ Total population
+
+Unit of measure is in tonnes
+
+```{r}
+
+
+Trial_dataset$Emissions_per_capita <- 
+  Trial_dataset$Total_emissions * 1000000 / Trial_dataset$Population 
+
+Final_dataset <- Trial_dataset %>%
+  select(
+    Country, Year, Tax_rate_usd, GDP_per_capita, Fossil_fuels_share, 
+    Emissions_per_capita
+  )
+
+```
+
+```{r}
+usethis::use_git()      # say yes to commit, then RStudio restarts
+usethis::use_github()   # creates the repo on GitHub and uploads it
+```

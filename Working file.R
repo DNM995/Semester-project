@@ -1,0 +1,7 @@
+install.packages("usethis")
+library(usethis)
+use_git_config(user.name = "DNM995", user.email = "diana.mokhlis@gmail.com")
+usethis::create_github_token()
+install.packages("gitcreds")
+gitcreds::gitcreds_set()
+usethis::git_sitrep()

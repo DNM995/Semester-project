@@ -1,0 +1,20 @@
+---
+title: "Problem statement"
+author: "Erica and Diana"
+format: pdf
+editor: visual
+---
+
+## Motivation:
+
+Carbon taxes are one of the main tools for reducing GHG emissions and reaching the climate targets. In this project, we will investigate the impact of carbon tax rates on national GHG emissions based on historical data. The sensitivity to carbon taxes may be different depending on emission intensity in energy production and/or a country's economic welfare. Therefore, we will also consider the impact of the emission intensity in the energy mix by using the fossil fuel share, and the country's economic welfare by using GDP per capita.
+
+## Problem statement:
+
+Does a higher carbon tax rate lead to lower GHG emissions per capita after factoring in fossil fuel share in the energy mix and GDP?
+
+## Data sources:
+
+For our data sources, we found most of the data we needed in *Eurostat*, where we will be using the data sets (*Real GDP per capita, Population on 1 January by age and sex, Greenhouse gas emissions by source sector, Complete energy balances*).
+
+Another source of data we will be using is *OECD Data Explorer* where we got the data set on *Net effective carbon rates*. From this data set, we will mainly be using the carbon tax rate for selected countries.
