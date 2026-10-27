@@ -41,8 +41,8 @@ The raw files we found contains many variables and columns we don't need. Theref
 
 Explain what the data shows us from the final dataset. ow many countries ever had a carbon tax and how many never did, the range of each variable, and anything unusual (for example Luxembourg's high emissions in the early years). Mention the correlations Half a page
 
-## **Exploring the data**
-=======
+# \## **Exploring the data**
+
 # RQ:
 
 Does a high carbon tax rate lead to lower GHG emissions per capita after factoring in fossil fuel share in the energy mix and GDP?
@@ -50,7 +50,6 @@ Does a high carbon tax rate lead to lower GHG emissions per capita after factori
 ### packages installed:
 
 install.packages("tidyverse") install.packages("tinytex") install.packages("hrbrthemes") install.packages("ggrepel")
-
 
 ```{r}
 #| label: Setup and packages
@@ -201,7 +200,6 @@ Trial_dataset <- merge(
 
 ```
 
-
 Unit of measure is in tonnes
 
 ```{r}
@@ -239,8 +237,6 @@ ggplot(
 
 ```
 
-
- 
 ```{r}
 #| label: Carbon tax rates throughout the years
 #| echo: true
@@ -270,8 +266,6 @@ Final_dataset %>%
  
 ```
 
-
-
 #PLotting fossil fuels share in the countries energy mix, and in a seperte plot emissions agains GDP.
 
 ```{r}
@@ -295,7 +289,6 @@ Final_dataset %>% #Putting the countries in order from highest to lowest e, and 
   labs(title = "Emissions per Capita and Fossil Fuel Dependence")
 ```
 
-
 ```{r}
 #| label: GDP per capita agains emissions per capita
 #| echo: true
@@ -318,4 +311,3 @@ Final_dataset %>%
   labs(title = "GDP and emissions per capita")
 
 ```
-
