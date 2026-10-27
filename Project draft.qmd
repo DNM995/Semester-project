@@ -5,6 +5,7 @@ format: pdf
 editor: visual
 ---
 
+<<<<<<< HEAD
 ### **Introduction**
 
 Governments around the world are introducing policies to reduce greenhouse gas (GHG) emissions and support the transition to a lower-carbon economy. Carbon taxes are among the most important of these tools, and Europe is where carbon pricing is most developed. Finland introduced the world’s first carbon tax in 1990, starting at a low rate that rose over time, and the policy has since inspired other nations to consider similar approaches (EARTH.ORG). Today, 24 European countries have a carbon tax. By putting a price on carbon, the tax makes emitting more costly and gives households and firms a reason to cut back.
@@ -42,6 +43,15 @@ The raw files we found contains many variables and columns we don't need. Theref
 Explain what the data shows us from the final dataset. ow many countries ever had a carbon tax and how many never did, the range of each variable, and anything unusual (for example Luxembourg's high emissions in the early years). Mention the correlations Half a page
 
 ## **Exploring the data**
+=======
+# RQ:
+
+Does a high carbon tax rate lead to lower GHG emissions per capita after factoring in fossil fuel share in the energy mix and GDP?
+
+### packages installed:
+
+install.packages("tidyverse") install.packages("tinytex") install.packages("hrbrthemes") install.packages("ggrepel")
+>>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
 
 ```{r}
 #| label: Setup and packages
@@ -51,6 +61,13 @@ Explain what the data shows us from the final dataset. ow many countries ever ha
 
 library(tidyverse)
 library(readxl)
+<<<<<<< HEAD
+=======
+library(ggplot2)
+library(hrbrthemes)
+library(ggrepel)
+
+>>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
 
 Carbon_tax <- read_excel(
   "Carbon_tax.xlsx", sheet = "Compliance_Price", skip = 1)
@@ -189,13 +206,20 @@ Trial_dataset <- merge(
 
 ```
 
+<<<<<<< HEAD
 ### Calculating: emissions per capita = Total emissions/ Total population
+=======
+### Calculating: emissions per capita = Total emissions/ Total population (Emissions per capita is measured in tonnes of CO2-equivalent per person)
+>>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
 
 Unit of measure is in tonnes
 
 ```{r}
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
 Trial_dataset$Emissions_per_capita <- 
   Trial_dataset$Total_emissions * 1000000 / Trial_dataset$Population 
 
@@ -204,10 +228,116 @@ Final_dataset <- Trial_dataset %>%
     Country, Year, Tax_rate_usd, GDP_per_capita, Fossil_fuels_share, 
     Emissions_per_capita
   )
+<<<<<<< HEAD
+=======
+```
+
+Plotting each countrie GHG emissions per capita throughout the years. How did emissions evolve throughout the years?
+
+```{r}
+#| label: GHG emissions per capita
+#| echo: true
+#| message: false
+#| warning: false
+#| fig-height: 8
+
+ggplot(
+  Final_dataset, aes(x = Year, y = Emissions_per_capita, color = Country)) + 
+  geom_line(linewidth = 0.4) +
+  scale_x_continuous(breaks = seq(2005, 2024, by = 2)) +
+  scale_y_continuous(breaks = seq(0, 30, by = 2)) +
+  labs(
+    title = "GHG emissions per capita", y = "GHG emissions (tonnes CO2 per person)"
+  ) +
+  theme_classic(base_size = 11)
+
+>>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
 
 ```
 
 ```{r}
+<<<<<<< HEAD
 usethis::use_git()      # say yes to commit, then RStudio restarts
 usethis::use_github()   # creates the repo on GitHub and uploads it
 ```
+=======
+#| label: Carbon tax rates throughout the years
+#| echo: true
+#| message: false
+#| warning: false
+#| fig-height: 6
+
+Final_dataset %>%
+   mutate(
+    Carbon_Tax = ifelse(Tax_rate_usd <= 0, NA, Tax_rate_usd),
+    Country = fct_reorder(Country, Tax_rate_usd, .fun = max)
+  ) %>%
+  ggplot(aes(Year, Country, fill = Carbon_Tax)) + 
+  geom_tile(colour = "white", linewidth = 0.5) +
+   theme_minimal(base_size = 11) +
+  scale_x_continuous(breaks = seq(2005, 2024, by = 5), expand = c(0, 0)) +
+  labs(x = NULL, y = NULL) +
+    theme(panel.grid = element_blank(), legend.position = "bottom", legend.key.width = unit(1.5, "cm")
+  ) +
+  scale_fill_viridis_c(
+    option = "mako", direction = -1, trans = "sqrt",
+    breaks = c(5, 25, 50, 100, 150),
+    na.value = "white",
+    name = "Tax in USD per tonne of CO2"
+  ) +
+  labs(title = "Development of carbon tax rates")
+ 
+
+```
+
+#PLotting fossil fuels share in the countries energy mix, and in a seperte plot emissions agains GDP.
+
+```{r}
+#| label: Fossil fuels share in energy mix agains emissions per capita
+#| echo: true
+#| message: false
+#| warning: false
+#| fig-height: 8
+
+Final_dataset %>% #Putting the countries in order from highest to lowest e, and getting the average.
+  mutate(Country = reorder(Country, Emissions_per_capita, FUN = mean)) %>% 
+  ggplot(aes(Year, Country, size = Fossil_fuels_share, colour = Emissions_per_capita)) +
+  geom_point(alpha = 1) +
+  scale_colour_gradient(low = "paleturquoise", high = "midnightblue", breaks = seq(0, 30, by = 5), name = "Tonnes CO2e\nper person") +
+  scale_size(range = c(2, 10), breaks = seq(0, 100, by = 10),
+             name = "Fossil fuel\nshare (%)") +
+  scale_x_continuous(breaks = seq(2005, 2024, by = 2)) +
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.minor = element_blank(), legend.position = "right") +
+  labs(title = "Emissions per Capita and Fossil Fuel Dependence")
+  
+```
+
+```{r}
+#| label: GDP per capita agains emissions per capita
+#| echo: true
+#| message: false
+#| warning: false
+#| fig-height: 8
+
+#Order of countries by average emissions (lowest at bottom, highest at top)
+Final_dataset %>% 
+  mutate(Country = reorder(Country, Emissions_per_capita, FUN = mean)) %>% 
+  ggplot(aes(Year, Country, size = GDP_per_capita, colour = Emissions_per_capita)) +
+  geom_point(alpha = 5) +
+  scale_colour_gradient(low = "lightblue1", high = "midnightblue", breaks = seq(0, 30, by = 5), name = "Tonnes CO2e\nper person") +
+  scale_size(range = c(2, 10), breaks = c(10000, 20000, 40000, 60000, 80000, 110000), labels = scales::label_comma(),
+             name = "GDP per capita") +
+  scale_x_continuous(breaks = seq(2005, 2024, by = 2)) +
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(panel.grid.minor = element_blank(), legend.position = "right") +
+  labs(title = "GDP and emissions per capita")
+
+```
+```{r}
+
+```
+
+>>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
