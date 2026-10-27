@@ -5,7 +5,6 @@ format: pdf
 editor: visual
 ---
 
-<<<<<<< HEAD
 ### **Introduction**
 
 Governments around the world are introducing policies to reduce greenhouse gas (GHG) emissions and support the transition to a lower-carbon economy. Carbon taxes are among the most important of these tools, and Europe is where carbon pricing is most developed. Finland introduced the world’s first carbon tax in 1990, starting at a low rate that rose over time, and the policy has since inspired other nations to consider similar approaches (EARTH.ORG). Today, 24 European countries have a carbon tax. By putting a price on carbon, the tax makes emitting more costly and gives households and firms a reason to cut back.
@@ -51,7 +50,7 @@ Does a high carbon tax rate lead to lower GHG emissions per capita after factori
 ### packages installed:
 
 install.packages("tidyverse") install.packages("tinytex") install.packages("hrbrthemes") install.packages("ggrepel")
->>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
+
 
 ```{r}
 #| label: Setup and packages
@@ -61,13 +60,9 @@ install.packages("tidyverse") install.packages("tinytex") install.packages("hrbr
 
 library(tidyverse)
 library(readxl)
-<<<<<<< HEAD
-=======
 library(ggplot2)
 library(hrbrthemes)
 library(ggrepel)
-
->>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
 
 Carbon_tax <- read_excel(
   "Carbon_tax.xlsx", sheet = "Compliance_Price", skip = 1)
@@ -206,20 +201,11 @@ Trial_dataset <- merge(
 
 ```
 
-<<<<<<< HEAD
-### Calculating: emissions per capita = Total emissions/ Total population
-=======
-### Calculating: emissions per capita = Total emissions/ Total population (Emissions per capita is measured in tonnes of CO2-equivalent per person)
->>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
 
 Unit of measure is in tonnes
 
 ```{r}
 
-<<<<<<< HEAD
-
-=======
->>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
 Trial_dataset$Emissions_per_capita <- 
   Trial_dataset$Total_emissions * 1000000 / Trial_dataset$Population 
 
@@ -228,8 +214,7 @@ Final_dataset <- Trial_dataset %>%
     Country, Year, Tax_rate_usd, GDP_per_capita, Fossil_fuels_share, 
     Emissions_per_capita
   )
-<<<<<<< HEAD
-=======
+
 ```
 
 Plotting each countrie GHG emissions per capita throughout the years. How did emissions evolve throughout the years?
@@ -251,16 +236,12 @@ ggplot(
   ) +
   theme_classic(base_size = 11)
 
->>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
 
 ```
 
+
+ 
 ```{r}
-<<<<<<< HEAD
-usethis::use_git()      # say yes to commit, then RStudio restarts
-usethis::use_github()   # creates the repo on GitHub and uploads it
-```
-=======
 #| label: Carbon tax rates throughout the years
 #| echo: true
 #| message: false
@@ -287,8 +268,9 @@ Final_dataset %>%
   ) +
   labs(title = "Development of carbon tax rates")
  
-
 ```
+
+
 
 #PLotting fossil fuels share in the countries energy mix, and in a seperte plot emissions agains GDP.
 
@@ -311,8 +293,8 @@ Final_dataset %>% #Putting the countries in order from highest to lowest e, and 
   theme_minimal(base_size = 11) +
   theme(panel.grid.minor = element_blank(), legend.position = "right") +
   labs(title = "Emissions per Capita and Fossil Fuel Dependence")
-  
 ```
+
 
 ```{r}
 #| label: GDP per capita agains emissions per capita
@@ -336,8 +318,4 @@ Final_dataset %>%
   labs(title = "GDP and emissions per capita")
 
 ```
-```{r}
 
-```
-
->>>>>>> b5b5f07114195da9c20cc33baceffe0d0c317023
